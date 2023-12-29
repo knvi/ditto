@@ -6,12 +6,15 @@ exports.useAtomValue = exports.useAtom = exports.atom = void 0;
 const tslib_1 = require("tslib");
 // const dataAtom = atom(() => fetch("./data.json").then((res) => res.json()));
 const react_1 = require("react");
+function isAtom(atom) {
+    return 'get' in atom && 'subscribe' in atom;
+}
 function atom(initialValue) {
     let value = typeof initialValue === "function" ? null : initialValue;
     const subscribers = new Set();
     const subscribed = new Set();
     function get(atom) {
-        if ('get' in atom && 'subscribe' in atom) {
+        if (isAtom(atom)) {
             let currentValue = atom.get();
             if (!subscribed.has(atom)) {
                 subscribed.add(atom);
@@ -31,11 +34,11 @@ function atom(initialValue) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             try {
                 const newValue = typeof initialValue === "function" ? initialValue(get) : value;
-                value = null;
                 value = yield newValue;
                 subscribers.forEach((callback) => callback(value));
             }
             catch (error) {
+                console.error(error);
                 throw error;
             }
         });
