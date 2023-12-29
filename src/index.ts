@@ -57,7 +57,7 @@ export function atom<AtomType extends unknown>(
 
       subscribers.forEach((callback) => callback(value));
     } catch (error) {
-      console.error(error);
+      throw error;
     }
   }
 
