@@ -16,42 +16,49 @@ type AtomGetter<AtomType> = (
   get: <Target>(a: Atom<Target>) => Target
 ) => AtomType;
 
-export function atom<AtomType extends unknown> (
+export function atom<AtomType extends unknown>(
   initialValue: AtomType | AtomGetter<AtomType>
 ): Atom<AtomType> {
-  let value: AtomType = 
+  let value: AtomType =
     typeof initialValue === "function" ? (null as AtomType) : initialValue;
 
   const subscribers = new Set<(newValue: AtomType) => void>();
   const subscribed = new Set<Atom<any>>();
 
   function get<Target>(atom: Atom<Target>) {
-    let currentValue = atom.get();
+    if ('get' in atom && 'subscribe' in atom) {
+      let currentValue = atom.get();
 
-    if(!subscribed.has(atom)) {
-      subscribed.add(atom)
+      if (!subscribed.has(atom)) {
+        subscribed.add(atom)
 
-      atom.subscribe(function (newValue) {
-        if(currentValue === newValue) {
-          return;
-        }
+        atom.subscribe(function (newValue) {
+          if (currentValue === newValue) {
+            return;
+          }
 
-        currentValue = newValue
-        calculateValue();
-      })
+          currentValue = newValue
+          calculateValue();
+        })
+      }
+
+      return currentValue;
     }
-
-    return currentValue;
+    throw new Error("not an atom");
   }
 
   async function calculateValue() {
-    const newValue = 
-      typeof initialValue === "function" ? (initialValue as AtomGetter<AtomType>)(get) : value;
+    try {
+      const newValue =
+        typeof initialValue === "function" ? (initialValue as AtomGetter<AtomType>)(get) : value;
 
-    value = (null as AtomType)
-    value = await newValue
+      value = (null as AtomType)
+      value = await newValue
 
-    subscribers.forEach((callback) => callback(value));
+      subscribers.forEach((callback) => callback(value));
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   calculateValue();
