@@ -16,6 +16,10 @@ type AtomGetter<AtomType> = (
   get: <Target>(a: Atom<Target>) => Target
 ) => AtomType;
 
+function isAtom<Target>(atom: any): atom is Atom<Target> {
+  return 'get' in atom && 'subscribe' in atom
+}
+
 export function atom<AtomType extends unknown>(
   initialValue: AtomType | AtomGetter<AtomType>
 ): Atom<AtomType> {
@@ -26,7 +30,7 @@ export function atom<AtomType extends unknown>(
   const subscribed = new Set<Atom<any>>();
 
   function get<Target>(atom: Atom<Target>) {
-    if ('get' in atom && 'subscribe' in atom) {
+    if (isAtom(atom)) {
       let currentValue = atom.get();
 
       if (!subscribed.has(atom)) {
@@ -57,6 +61,7 @@ export function atom<AtomType extends unknown>(
 
       subscribers.forEach((callback) => callback(value));
     } catch (error) {
+      console.error(error);
       throw error;
     }
   }
