@@ -11,25 +11,33 @@ function atom(initialValue) {
     const subscribers = new Set();
     const subscribed = new Set();
     function get(atom) {
-        let currentValue = atom.get();
-        if (!subscribed.has(atom)) {
-            subscribed.add(atom);
-            atom.subscribe(function (newValue) {
-                if (currentValue === newValue) {
-                    return;
-                }
-                currentValue = newValue;
-                calculateValue();
-            });
+        if ('get' in atom && 'subscribe' in atom) {
+            let currentValue = atom.get();
+            if (!subscribed.has(atom)) {
+                subscribed.add(atom);
+                atom.subscribe(function (newValue) {
+                    if (currentValue === newValue) {
+                        return;
+                    }
+                    currentValue = newValue;
+                    calculateValue();
+                });
+            }
+            return currentValue;
         }
-        return currentValue;
+        throw new Error("not an atom");
     }
     function calculateValue() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            const newValue = typeof initialValue === "function" ? initialValue(get) : value;
-            value = null;
-            value = yield newValue;
-            subscribers.forEach((callback) => callback(value));
+            try {
+                const newValue = typeof initialValue === "function" ? initialValue(get) : value;
+                value = null;
+                value = yield newValue;
+                subscribers.forEach((callback) => callback(value));
+            }
+            catch (error) {
+                throw error;
+            }
         });
     }
     calculateValue();
@@ -58,6 +66,4 @@ function useAtomValue(atom) {
     return (0, react_1.useSyncExternalStore)(atom.subscribe, atom.get);
 }
 exports.useAtomValue = useAtomValue;
-const atomCount = atom(0);
-const atomCount2 = atom(atomCount);
 //# sourceMappingURL=index.js.map
